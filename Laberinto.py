@@ -190,4 +190,42 @@ class GeneticAlgorithm:
         # Espera a que el usuario cierre la ventana.
         self.wait_for_exit(screen)
         
+        def visualize(self, screen, path):
+        """Visualiza el camino actual en la pantalla de Pygame."""
+        # Llena la pantalla con un color de fondo oscuro.
+        screen.fill((20, 20, 20))
+        cell_size = 50  # Tamaño de cada celda en la cuadrícula.
+
+        # Dibuja los obstáculos en gris oscuro.
+        for obstacle in self.maze.obstacles:
+            pygame.draw.rect(screen, (128, 128, 128), (obstacle[1]*cell_size, obstacle[0]*cell_size, cell_size, cell_size))
+
+        # Dibuja cada posición del camino con un gradiente de azul, variando la intensidad.
+        for i, pos in enumerate(path):
+            intensity = 255 - int((i / len(path)) * 150)
+            pygame.draw.rect(screen, (0, intensity, 255), (pos[1]*cell_size, pos[0]*cell_size, cell_size, cell_size))
+            # Dibuja un borde negro alrededor de cada celda del camino.
+            pygame.draw.rect(screen, (0, 0, 0), (pos[1]*cell_size, pos[0]*cell_size, cell_size, cell_size), 1)
+
+        # Dibuja el punto de inicio en verde y el objetivo en rojo.
+        pygame.draw.rect(screen, (0, 255, 0), (self.maze.start[1]*cell_size, self.maze.start[0]*cell_size, cell_size, cell_size))
+        pygame.draw.rect(screen, (255, 0, 0), (self.maze.end[1]*cell_size, self.maze.end[0]*cell_size, cell_size, cell_size))
+        # Actualiza la pantalla para mostrar los cambios.
+        pygame.display.flip()
+        # Espera un corto período para visualizar cada generación.
+        pygame.time.delay(100)
+
+    def wait_for_exit(self, screen):
+        """Mantiene la ventana de Pygame abierta hasta que el usuario la cierre."""
+        running = True
+        while running:
+            # Captura eventos en la ventana de Pygame.
+            for event in pygame.event.get():
+                # Si el usuario intenta cerrar la ventana, termina el bucle.
+                if event.type == pygame.QUIT:
+                    running = False
+        # Cierra la ventana de Pygame.
+        pygame.quit()
+
+        
         
