@@ -111,4 +111,83 @@ class GeneticAlgorithm:
             return child_path
         else:
             return parent1
+        
+    def mutate(self, path, generation):
+        """Aplica una mutación adaptativa en el camino, reduciendo la tasa de mutación con el tiempo."""
+        mutation_rate = self.initial_mutation_rate * (1 - (generation / self.max_generations))
+        if random.random() < mutation_rate:
+            # Selecciona un punto aleatorio para la mutación y lo mueve a una celda adyacente.
+            mutate_index = random.randint(1, len(path) - 2)
+            new_position = self.get_adjacent_step(path[mutate_index - 1], path)
+            path[mutate_index] = new_position
 
+    def is_path_contiguous(self, path):
+        """Verifica si el camino es contiguo, es decir, cada paso es adyacente al anterior."""
+        for i in range(1, len(path)):
+            if abs(path[i][0] - path[i-1][0]) + abs(path[i][1] - path[i-1][1]) > 1:
+                return False
+        return True
+
+    def evolve(self, generation):
+        """Evoluciona la población mediante selección, cruce y mutación."""
+        new_population = []
+        best_path = max(self.population, key=lambda path: self.fitness(path, generation))
+        new_population.append(best_path)  # Elitismo: el mejor camino se mantiene sin cambios.
+
+        parents = self.selection(generation)
+        for _ in range(self.population_size - 1):
+            # Selecciona dos padres al azar y crea un descendiente mediante cruce y mutación.
+            parent1, parent2 = random.sample(parents, 2)
+            offspring = self.crossover(parent1, parent2)
+            self.mutate(offspring, generation)
+            # Asegura que el descendiente es contiguo; si no, usa al primer padre como respaldo.
+            if self.is_path_contiguous(offspring):
+                new_population.append(offspring)
+            else:
+                new_population.append(parent1)
+        self.population = new_population
+        return best_path
+
+    def run(self, screen):
+        """Ejecuta el algoritmo genético hasta encontrar el objetivo o alcanzar el límite de generaciones."""
+        generation = 0
+        best_path = None
+        found_goal = False
+
+        while generation < self.max_generations:
+            best_path = self.evolve(generation)
+            current_best_fitness = self.fitness(best_path, generation)
+            print(f"Generación {generation}, Mejor Fitness: {current_best_fitness}")
+            generation += 1
+            
+            # Visualiza el mejor camino de la generación actual.
+            self.visualize(screen, best_path)
+
+            # Si el mejor camino llega al objetivo y es contiguo, se considera encontrado y se termina el algoritmo.
+            if best_path[-1] == self.maze.end and self.is_path_contiguous(best_path):
+                found_goal = True
+                print(f"Camino óptimo encontrado en la generación {generation}. Algoritmo finalizado.")
+                break
+            
+            # Comprueba si el algoritmo está estancado cada 30 generaciones.
+            if generation % 30 == 0:
+                new_best_fitness = self.fitness(best_path, generation)
+                if new_best_fitness == self.best_fitness:
+                    # Si no hay mejora en el fitness, incrementa el contador de generaciones estancadas.
+                    self.stagnant_generations += 1
+                    # Si el número de generaciones estancadas supera el límite, termina la búsqueda.
+                    if self.stagnant_generations > self.max_stagnant_generations:
+                        print("Algoritmo estancado. Finalizando búsqueda.")
+                        break
+                else:
+                    # Actualiza el mejor fitness y reinicia el contador de generaciones estancadas.
+                    self.best_fitness = new_best_fitness
+                    self.stagnant_generations = 0
+
+        # Si no se encontró un camino óptimo, informa que el algoritmo ha terminado sin éxito.
+        if not found_goal:
+            print("Algoritmo finalizado. No se encontró un camino óptimo en el límite de generaciones.")
+        # Espera a que el usuario cierre la ventana.
+        self.wait_for_exit(screen)
+        
+        
