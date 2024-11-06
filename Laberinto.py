@@ -86,4 +86,29 @@ class GeneticAlgorithm:
         fitness_value = -(distance_penalty + obstacle_penalty + length_penalty + turns + repeat_penalty)
         return fitness_value
     
-    
+    def selection(self, generation):
+        """Selecciona la mejor mitad de la población en base a su aptitud para la siguiente generación."""
+        weighted_population = [(self.fitness(path, generation), path) for path in self.population]
+        weighted_population.sort(reverse=True, key=lambda x: x[0])
+        return [path for _, path in weighted_population[:int(self.population_size * 0.4)]]  # Mantiene el 40% superior
+
+    def crossover(self, parent1, parent2):
+        """Realiza un cruce de un solo punto entre dos caminos, asegurando que el hijo sea contiguo."""
+        if random.random() > self.crossover_rate:
+            return parent1  # Sin cruce si el valor aleatorio supera la tasa de cruce.
+
+        # Determina el punto de cruce y combina las partes de ambos padres.
+        crossover_point = random.randint(1, len(parent1) - 2)
+        child_path = parent1[:crossover_point]
+
+        # Añade el resto de posiciones del segundo padre, asegurando que sean adyacentes.
+        for i in range(crossover_point, len(parent2)):
+            next_step = self.get_adjacent_step(child_path[-1], child_path)
+            child_path.append(next_step)
+
+        # Verifica que el hijo resultante sea contiguo; si no, devuelve el primer padre.
+        if self.is_path_contiguous(child_path):
+            return child_path
+        else:
+            return parent1
+
