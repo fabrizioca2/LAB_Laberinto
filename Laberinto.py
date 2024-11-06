@@ -88,3 +88,54 @@ class GeneticAlgorithm:
             return child_path
         else:
             return parent1  # Si el cruce rompe la conectividad, usar el padre
+        
+    def mutate(self, path):
+        """Aplica una mutación a un camino, moviendo una posición a una celda adyacente."""
+        if random.random() < self.mutation_rate:
+            mutate_index = random.randint(1, len(path) - 2)
+            new_position = self.get_adjacent_step(path[mutate_index - 1], path)
+            path[mutate_index] = new_position
+
+    def evolve(self):
+        """Evoluciona la población mediante selección, cruce y mutación."""
+        new_population = []
+        best_path = max(self.population, key=self.fitness)
+        new_population.append(best_path)  # Elitismo para mantener el mejor camino
+
+        parents = self.selection()
+        for _ in range(self.population_size - 1):
+            parent1, parent2 = random.sample(parents, 2)
+            offspring = self.crossover(parent1, parent2)
+            self.mutate(offspring)
+            if self.is_path_contiguous(offspring):  # Añadir solo caminos contiguos
+                new_population.append(offspring)
+            else:
+                new_population.append(parent1)  # En caso de falla, usar el padre como respaldo
+        self.population = new_population
+        return best_path
+
+    def run(self, screen):
+        """Ejecuta el algoritmo genético hasta encontrar el objetivo o alcanzar el límite de generaciones."""
+        generation = 0
+        best_path = None
+        found_goal = False
+
+        while generation < self.max_generations:
+            best_path = self.evolve()
+            print(f"Generación {generation}, Mejor Fitness: {self.fitness(best_path)}")
+            generation += 1
+            
+            # Visualiza el mejor camino de esta generación
+            self.visualize(screen, best_path)
+
+            # Verifica si el mejor camino llega al objetivo
+            if best_path[-1] == self.maze.end:
+                found_goal = True
+                break
+
+        if found_goal:
+            print("Camino óptimo encontrado antes de alcanzar el límite de generaciones.")
+        else:
+            print("Algoritmo finalizado. No se encontró un camino óptimo en el límite de generaciones.")
+
+        self.wait_for_exit(screen)
