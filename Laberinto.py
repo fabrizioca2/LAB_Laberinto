@@ -37,3 +37,16 @@ class GeneticAlgorithm:
                         path.append(next_step)
                     population.append(path)
                 return population
+        
+        def get_adjacent_step(self, position, path):
+        """Genera un paso adyacente desde la posición actual, asegurando continuidad y conectividad."""
+            directions = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+            random.shuffle(directions)
+        for direction in directions:
+            next_position = (position[0] + direction[0], position[1] + direction[1])
+            if self.maze.is_free(next_position) and next_position not in path:
+                return next_position
+        return position  # Si no hay opciones válidas, permanece en la posición actual
+    
+        
+    
